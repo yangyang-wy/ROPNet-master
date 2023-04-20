@@ -64,7 +64,7 @@ class LocalFeatue(nn.Module):
             ni_d = angle(new_points[..., 3:], grouped_xyz)
             nr_ni = angle(feature[:, :, None, :], new_points[..., 3:])
             d_norm = torch.norm(grouped_xyz, dim=-1)
-            ppf_feat = torch.stack([nr_d, ni_d, nr_ni, d_norm], dim=-1) # (B, N, K, 4)
+            ppf_feat = torch.stack([nr_d, ni_d, nr_ni, d_norm], dim=-1) # (B, N, K, 4) 沿着一个新维度对输入张量序列进行连接，增加新的维度进行堆叠
             new_points = torch.cat([new_points[..., :3], ppf_feat], dim=-1)
         xyz = torch.unsqueeze(xyz, dim=2).repeat(1, 1, self.K, 1)
         new_points = torch.cat([xyz, new_points], dim=-1)
@@ -73,7 +73,7 @@ class LocalFeatue(nn.Module):
         return feature_local
 
 
-class OverlapAttentionBlock(nn.Module):
+class OverlapAttentionBlock(nn.Module):  # 重叠注意块
     def __init__(self, channels):
         super(OverlapAttentionBlock, self).__init__()
         self.q_conv = nn.Conv1d(channels, channels // 4, 1, bias=False)
@@ -90,11 +90,11 @@ class OverlapAttentionBlock(nn.Module):
         :param ol: (B, N)
         :return: (B, C, N)
         '''
-        B, C, N = x.size()
-        x_q = self.q_conv(x).permute(0, 2, 1).contiguous() # B, N, C
-        x_k = self.k_conv(x) # B, C, N
-        x_v = self.v_conv(x)
-        attention = torch.bmm(x_q, x_k) # B, N, N
+        B, C, N = x.size()  # （8，192，717）
+        x_q = self.q_conv(x).permute(0, 2, 1).contiguous() # B, N, C  （8，717，48）
+        x_k = self.k_conv(x) # B, C, N    （8，48，717）
+        x_v = self.v_conv(x) # （8，192，717）
+        attention = torch.bmm(x_q, x_k) # B, N, N 矩阵乘法 （8，717，717）
         if ol_score is not None:
             ol_score = torch.unsqueeze(ol_score, dim=-1).repeat(1, 1, N) # (B, N, N)
             attention = ol_score * attention
@@ -119,7 +119,7 @@ class OverlapAttention(nn.Module):
             nn.LeakyReLU(negative_slope=0.2))
 
     def forward(self, x, ol):
-        x1 = self.overlap_attention1(x, ol)
+        x1 = self.overlap_attention1(x, ol)    # B C N
         x2 = self.overlap_attention2(x1, ol)
         x3 = self.overlap_attention3(x2, ol)
         x4 = self.overlap_attention4(x3, ol)
@@ -171,7 +171,7 @@ class TFMRModule(nn.Module):
         '''
         B, _, _ = src.size()
         if train:
-            N1, M1, top_prob = self.N1s[0], self.M1s[0], self.top_probs[0]
+            N1, M1, top_prob = self.N1s[0], self.M1s[0], self.top_probs[0]    # 448，717，0.6    top-prob指在prob的概率比例中获得具有最高相似性得分的指数的数量
             similarity_topk = self.similarity_topks[0]
         else:
             N1, M1, top_prob = self.N1s[1], self.M1s[1], self.top_probs[1]
@@ -181,7 +181,7 @@ class TFMRModule(nn.Module):
         if self.use_ppf and normal_src is not None:
             f_x_p = self.local_features(feature=normal_src,
                                         xyz=src,
-                                        use_ppf=True)
+                                        use_ppf=True)     # （8，192，717）local_feature
         else:
             f_x_p = self.local_features(feature=None,
                                         xyz=src)
@@ -190,10 +190,10 @@ class TFMRModule(nn.Module):
             permute(0, 2, 1).contiguous()
         f_x_atten = f_x_attn / (torch.norm(f_x_attn, dim=-1,
                                         keepdim=True) + 1e-8)  # (B, N, C)
-        x_ol_score, x_ol_inds = torch.sort(x_ol_score, dim=-1, descending=True)
+        x_ol_score, x_ol_inds = torch.sort(x_ol_score, dim=-1, descending=True) # 对列表中元素排列 descending=True 为降序排列
         x_ol_inds = x_ol_inds[:, :N1]
         f_x_atten = gather_points(f_x_atten, x_ol_inds)  # (B, N1, C)
-        src = gather_points(src, x_ol_inds)
+        src = gather_points(src, x_ol_inds)    # self-attention后的src
 
         if iter == 0:
             # point feature extraction for tgt 模板点云的特征提取
@@ -219,25 +219,25 @@ class TFMRModule(nn.Module):
         else:
             f_y_atten, tgt = self.tgt_info['f_y_atten'], self.tgt_info['tgt']
 
-        similarity = torch.bmm(f_x_atten, f_y_atten.permute(0, 2, 1).contiguous()) # (B, N1, M1)
+        similarity = torch.bmm(f_x_atten, f_y_atten.permute(0, 2, 1).contiguous()) # (B, N1, M1)  torch.bmm计算两个tensor的矩阵乘法
 
         # feature matching removal  特征匹配去除
         N2 = int(top_prob * N1)  # train
         similarity_max = torch.max(similarity, dim=-1)[0]  # (B, N1)
         similarity_max_inds = \
-            torch.sort(similarity_max, dim=-1, descending=True)[1][:, :N2]
+            torch.sort(similarity_max, dim=-1, descending=True)[1][:, :N2]          # 对输入张量进行降序
         src = gather_points(src, similarity_max_inds)
 
         # generate correspondences 生成对应关系
         similarity = gather_points(similarity, similarity_max_inds) # (B, N2, M1)
         x_ol_score = torch.squeeze(
             gather_points(torch.unsqueeze(x_ol_score, dim=-1),
-                          similarity_max_inds), dim=-1)
+                          similarity_max_inds), dim=-1) # torch.squeeze 维度压缩    torch.squeeze 升维
         # find topk points in feature space 在特征空间中查找topk点
         device = similarity.device
         similarity_topk_inds = \
-            torch.topk(similarity, k=similarity_topk, dim=-1)[1]  # (B, N2, topk)
-        mask = torch.zeros_like(similarity).to(device).detach()
+            torch.topk(similarity, k=similarity_topk, dim=-1)[1]  # (B, N2, topk)  对于给定的输入 张量input，沿着给定的维度，返回k个最大元素
+        mask = torch.zeros_like(similarity).to(device).detach()     # 生成和括号内变量维度维度一致的全是零的内容
         inds1 = torch.arange(B, dtype=torch.long).to(device). \
             reshape((B, 1, 1)).repeat((1, N2, similarity_topk))
         inds2 = torch.arange(N2, dtype=torch.long).to(device). \

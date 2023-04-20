@@ -126,6 +126,8 @@ class CGModule(nn.Module):
         out = torch.bmm(attention_matrix, out3)  # b,c,n
         x = self.gamma * out.view(b, c, n) + x
 
+
+
         y = tgt.permute(0, 2, 1).contiguous()
         f_x, g_x = self.encoder(x)               # f_x(8,512,717),g_x(8,512)
         f_y, g_y = self.encoder(y)               # f_y(8,512,717),g_y(8,512)
@@ -165,7 +167,7 @@ class CGModule(nn.Module):
                                   g_x_expand - g_y_expand], dim=1)  # (8,2048,717)
         f_y_ensemble = torch.cat([f_y, g_y_expand, g_x_expand,
                                   g_y_expand - g_x_expand], dim=1)   # (8,2048,717)
-        x_ol = self.decoder_ol(f_x_ensemble, pooling=False)         # (8,2,717) decoder解码PointNet，pooling=False
+        x_ol = self.decoder_ol(f_x_ensemble, pooling=False)         # (8,2,717) decoder解码PointNet，pooling=False 源x点云的点重叠分数
         y_ol = self.decoder_ol(f_y_ensemble, pooling=False)
 
         return batch_T, x_ol, y_ol   # (8,3,4),(8,2,717),(8,2,717)

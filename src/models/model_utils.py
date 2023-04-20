@@ -5,7 +5,7 @@ from utils import batch_transform, square_dists
 # fps:farthest_point_sample最远点采样（从点中采样M个点）
 def fps(xyz, M):
     '''
-    Sample M points from points according to farthest point sampling (FPS) algorithm.
+    Sample M points from points according to farthest point sampling (FPS) algorithm.根据最远点采样（FPS）算法从点中采样M个点
     :param xyz: shape=(B, N, 3)
     :return: inds: shape=(B, M)
     '''
@@ -67,7 +67,7 @@ def ball_query(xyz, new_xyz, radius, K, rt_density=False):
     return grouped_inds
 
 
-def sample_and_group(xyz, points, M, radius, K, use_xyz=True, rt_density=False):
+def sample_and_group(xyz, points, M, radius, K, use_xyz=True, rt_density=False): # 使用sample_and_group以达到选取中心点分局部区域的目的
     '''
     :param xyz: shape=(B, N, 3)
     :param points: shape=(B, N, C)

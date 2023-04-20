@@ -39,16 +39,16 @@ class ROPNet(nn.Module):
             normal_src = src[..., 3:]   # （8，717，3）
             normal_tgt = tgt[..., 3:]
         src = src[..., :3]
-        src_raw = copy.deepcopy(src)
+        src_raw = copy.deepcopy(src)     # 复制 raw（原始的）
         tgt = tgt[..., :3]
 
         results = {}
         pred_Ts, pred_src = [], []
 
         # CG module （CG模型）
-        T0, x_ol, y_ol = self.cg(src, tgt)       # (8,3,4),(8,2,717),(8,2,717)，变换矩阵T0
+        T0, x_ol, y_ol = self.cg(src, tgt)       # (8,3,4),(8,2,717),(8,2,717)，变换矩阵T0，x_ol，y_ol:源X和目标Y点云的点重叠分数
         R, t = T0[:, :3, :3], T0[:, :3, 3]       # (8,3,3),(8,3)，旋转矩阵+平移向量
-        src_t = batch_transform(src_raw, R, t)   # transform转换
+        src_t = batch_transform(src_raw, R, t)   # transform转换 src_t转换后的源点云
         normal_src_t = None
         if normal_src is not None:
             normal_src_t = batch_transform(normal_src, R).detach()  # detach分离，用于从计算图中分离出一个Tensor

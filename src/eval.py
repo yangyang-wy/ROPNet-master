@@ -109,7 +109,7 @@ def evaluate_ROPNet(args, test_loader):
 
 if __name__ == '__main__':
     seed = 222
-    random.seed(seed)
+    random.seed(seed)         # 随机种子（规定初始的随机值）
     np.random.seed(seed)
 
     args = eval_config_params()
