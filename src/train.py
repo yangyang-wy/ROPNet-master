@@ -6,7 +6,8 @@ import os                           # os.path模块主要用于文件的属性�
 import torch
 import torch.nn as nn              # torch.nn是pytorch中自带的一个函数库，里面包含了神经网络中使用的一些常用函数
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter   # 将条目直接写入log_dir中的事件文件以供TensorBoard使用
+# from torch.utils.tensorboard import SummaryWriter   # 将条目直接写入log_dir中的事件文件以供TensorBoard使用
+from tensorboardX import SummaryWriter
 from tqdm import tqdm                # 训练进度条提示信息
 
 import sys                     # 先把系统文件夹调到Root下，防止找不到文件
@@ -47,8 +48,10 @@ def train_one_epoch(train_loader, model, loss_fn, optimizer, epoch, log_freq, wr
     # 在进程0中打印训练进度，模型构建好之后的取数据迭代训练
     for step, (tgt_cloud, src_cloud, gtR, gtt) in enumerate(tqdm(train_loader)):
         np.random.seed((epoch + 1) * (step + 1))
-        tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cuda(), src_cloud.cuda(), \
-                                         gtR.cuda(), gtt.cuda()
+        # tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cuda(), src_cloud.cuda(), \
+        #                                  gtR.cuda(), gtt.cuda()
+        tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cpu(), src_cloud.cpu(), \
+                                         gtR.cpu(), gtt.cpu()
 
         optimizer.zero_grad()
         results = model(src=src_cloud,
@@ -112,8 +115,10 @@ def test_one_epoch(test_loader, model, loss_fn, epoch, log_freq, writer):
     with torch.no_grad():
         for step, (tgt_cloud, src_cloud, gtR, gtt) in enumerate(
                 tqdm(test_loader)):
-            tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cuda(), src_cloud.cuda(), \
-                                             gtR.cuda(), gtt.cuda()
+            # tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cuda(), src_cloud.cuda(), \
+            #                                  gtR.cuda(), gtt.cuda()
+            tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cpu(), src_cloud.cpu(), \
+                                             gtR.cpu(), gtt.cpu()
 
             results = model(src=src_cloud,
                             tgt=tgt_cloud,
@@ -203,7 +208,8 @@ def main():
                              num_workers=args.num_workers)
 
     model = ROPNet(args)
-    model = model.cuda()
+    # model = model.cuda()
+    model = model.cpu()
     loss_fn = cal_loss
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 

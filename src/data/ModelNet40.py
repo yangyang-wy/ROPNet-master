@@ -43,7 +43,7 @@ class ModelNet40(Dataset):
         self.half = half1 if split in 'train' else half2        # 训练 half1
         self.symmetric = half1_symmetric + half2_symmetric
         self.label2cat, self.cat2label = self.label2category(
-            os.path.join(root, '/home/wy/Projects/ROPNet-master/src/data/modelnet40_ply_hdf5_2048/shape_names.txt'))
+            os.path.join(root, 'shape_names.txt'))
         self.half_labels = [self.cat2label[cat] for cat in self.half]
         self.symmetric_labels = [self.cat2label[cat] for cat in self.symmetric]
         files = [os.path.join(root, 'ply_data_train{}.h5'.format(i))
