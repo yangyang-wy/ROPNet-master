@@ -5,27 +5,36 @@ def config_params():
     parser = argparse.ArgumentParser(description='Configuration Parameters',
                                      add_help=False)
     ## dataset：数据集
-    parser.add_argument('--root', required=True, help='the data path')    # 数据路径
+    # parser.add_argument('--root', required=True, help='the data path')    # 数据路径
+    parser.add_argument('--root', default='./modelnet40_ply_hdf5_2048', help='the data path')
     parser.add_argument('--npts', type=int, default=1024,
                         help='the points number of each pc for training')  # 每个pc（epoch）的训练点数：1024
-    parser.add_argument('--unseen', action='store_true',
-                        help='whether to use unseen mode')                  # 是否使用不可见模式
+    # parser.add_argument('--unseen', action='store_true',
+    #                     help='whether to use unseen mode')                  # 是否使用不可见模式
+    parser.add_argument('--unseen', default=True,
+                        help='whether to use unseen mode')
     parser.add_argument('--p_keep', type=list, default=[0.7, 0.7],
                         help='the keep ratio for partial registration')     # 部分配准的保留比率
     parser.add_argument('--ao', action='store_true',
                         help='whether to use asymmetric objects')          # 是否使用非对称对象
     parser.add_argument('--normal', default=True,
                         help='whether to use normal data')                 # 是否使用normal数据
-    parser.add_argument('--noise', action='store_true',
-                        help='whether to add noise when test')            # 测试时是否添加噪声
+    # parser.add_argument('--noise', action='store_true',
+    #                     help='whether to add noise when test')            # 测试时是否添加噪声
+    parser.add_argument('--noise', default=True,
+                        help='whether to add noise when test')
     parser.add_argument('--use_ppf', default=True,
                         help='whether to use_ppf as input feature')       #是否使用_ppf作为输入特征
     ## model 模型
-    parser.add_argument('--train_N1', type=int, default=448, help='')
-    parser.add_argument('--train_M1', type=int, default=717, help='')
+    # parser.add_argument('--train_N1', type=int, default=448, help='')
+    parser.add_argument('--train_N1', type=int, default=112, help='')
+    # parser.add_argument('--train_M1', type=int, default=717, help='')
+    parser.add_argument('--train_M1', type=int, default=180, help='')
     parser.add_argument('--train_similarity_topk', type=int, default=3, help='')
-    parser.add_argument('--test_N1', type=int, default=448, help='')
-    parser.add_argument('--test_M1', type=int, default=717, help='')
+    # parser.add_argument('--test_N1', type=int, default=448, help='')
+    parser.add_argument('--test_N1', type=int, default=112, help='')
+    # parser.add_argument('--test_M1', type=int, default=717, help='')
+    parser.add_argument('--test_M1', type=int, default=180, help='')
     parser.add_argument('--test_similarity_topk', type=int, default=1,
                         help='')
     parser.add_argument('--train_top_prob', type=float, default=0.6,
