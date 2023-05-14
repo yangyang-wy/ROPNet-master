@@ -1,7 +1,7 @@
 import argparse                     # argparse是一个用于命令项选项与参数解析的模块，通过在程序中定义好我们需要的参数，argparse 将会从 sys.argv 中解析出这些参数，并自动生成帮助和使用信息。
 import json                         # JSON(JavaScript Object Notation) 是一种轻量级的数据交换格式，易于人阅读和编写。json是最常用的数据交换格式，在python编码中需要将json字符串加载为python可以识别的python对象。
 import numpy as np                  # numpy是使用C语言实现的一个数据计算库，它用来处理相同类型，固定长度的元素。使用numpy操作数据时，系统运行的速度比使用python代码快很多。numpy中还提供了很多的数据处理函数，例如傅里叶变化，矩阵操作，数据拟合等操作。
-import open3d                       # 点云数据可视化
+# import open3d                       # 点云数据可视化
 import os                           # os.path模块主要用于文件的属性获取
 import torch
 import torch.nn as nn              # torch.nn是pytorch中自带的一个函数库，里面包含了神经网络中使用的一些常用函数
@@ -47,6 +47,8 @@ def train_one_epoch(train_loader, model, loss_fn, optimizer, epoch, log_freq, wr
     global test_min_loss, test_min_r_mse_error, test_min_rot_error
     # 在进程0中打印训练进度，模型构建好之后的取数据迭代训练
     for step, (tgt_cloud, src_cloud, gtR, gtt) in enumerate(tqdm(train_loader)):
+        if step < 6:
+            continue
         np.random.seed((epoch + 1) * (step + 1))
         # tgt_cloud, src_cloud, gtR, gtt = tgt_cloud.cuda(), src_cloud.cuda(), \
         #                                  gtR.cuda(), gtt.cuda()
@@ -203,7 +205,7 @@ def main():
                           normal=args.normal
                           )
     train_loader = DataLoader(train_set, batch_size=args.batchsize,
-                              shuffle=True, num_workers=args.num_workers)                  # shuffle=True，用于打乱数据集，每次都会以不同的顺序返回。
+                              shuffle=False, num_workers=args.num_workers)                  # shuffle=True，用于打乱数据集，每次都会以不同的顺序返回。
     test_loader = DataLoader(test_set, batch_size=args.batchsize, shuffle=False,
                              num_workers=args.num_workers)
 

@@ -53,7 +53,7 @@ class LocalFeatue(nn.Module):
         '''
         if permute:
             feature = feature.permute(0, 2, 1).contiguous()
-        new_xyz, new_points, grouped_inds, grouped_xyz = \
+        new_xyz, new_points, grouped_inds, grouped_xyz, K = \
             sample_and_group(xyz=xyz,
                              points=feature,
                              M=-1,
@@ -66,7 +66,7 @@ class LocalFeatue(nn.Module):
             d_norm = torch.norm(grouped_xyz, dim=-1)
             ppf_feat = torch.stack([nr_d, ni_d, nr_ni, d_norm], dim=-1) # (B, N, K, 4) 沿着一个新维度对输入张量序列进行连接，增加新的维度进行堆叠
             new_points = torch.cat([new_points[..., :3], ppf_feat], dim=-1)
-        xyz = torch.unsqueeze(xyz, dim=2).repeat(1, 1, self.K, 1)
+        xyz = torch.unsqueeze(xyz, dim=2).repeat(1, 1, K, 1)
         new_points = torch.cat([xyz, new_points], dim=-1)
         feature_local = new_points.permute(0, 3, 2, 1).contiguous() # (B, C1 + 3, K, M)
         feature_local = self.local_feature_fused(feature_local)
@@ -242,8 +242,9 @@ class TFMRModule(nn.Module):
             reshape((B, 1, 1)).repeat((1, N2, similarity_topk))
         inds2 = torch.arange(N2, dtype=torch.long).to(device). \
             reshape((1, N2, 1)).repeat((B, 1, similarity_topk))
-        mask[inds1, inds2, similarity_topk_inds] = 1
-        similarity = similarity * mask
+        if inds1.shape[1] < similarity_topk_inds.shape[1]:
+            mask[inds1, inds2, similarity_topk_inds] = 1
+            similarity = similarity * mask
 
         weights = similarity / \
                   (torch.sum(similarity, dim=-1, keepdim=True) + 1e-8)
