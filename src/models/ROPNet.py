@@ -1,6 +1,6 @@
 import copy
 import numpy as np
-import open3d as o3d
+# import open3d as o3d
 import os
 import torch
 import torch.nn as nn
@@ -108,13 +108,13 @@ class ROPNet(nn.Module):
                 similarity_max_inds_split_list.append(i[similarity_max_inds_split])
             R_batch = torch.mean(torch.stack(R_split_list), dim=0)
             T_batch = torch.mean(torch.stack(T_split_list), dim=0)
-            similarity_max_inds_batch = torch.stack(similarity_max_inds_split_list, dim=0).reshape(1, -1)
+            # similarity_max_inds_batch = torch.stack(similarity_max_inds_split_list, dim=0).reshape(1, -1)
             R_batch_list.append(R_batch)
             T_batch_list.append(T_batch)
-            similarity_max_inds_batch_list.append(similarity_max_inds_batch)
+            # similarity_max_inds_batch_list.append(similarity_max_inds_batch)
         R = torch.stack(R_batch_list, dim=0).squeeze()
         T = torch.stack(T_batch_list, dim=0).squeeze()
-        similarity_max_inds = torch.stack(similarity_max_inds_batch_list, dim=0).squeeze()
+        # similarity_max_inds = torch.stack(similarity_max_inds_batch_list, dim=0).squeeze()
         pred_Ts.append(T)
         src_t = batch_transform(src_raw, R, torch.squeeze(t, -1))  # (8,717,3)
         pred_src.append(src_t)
@@ -147,17 +147,17 @@ class ROPNet(nn.Module):
 
         ## for overlapping points in src（源点云中重叠点）
         _, x_ol_inds = torch.sort(x_ol_score, dim=-1, descending=True)   # 根据给定的维度对输入张量进行升值或降值排序,descending=True代表降值排序，False代表升值排序
-        x_ol_inds = x_ol_inds[:, :self.N1]          # (8,448)
-        src_ol1 = gather_points(src_raw, x_ol_inds)   # (8,448,3)
+        # x_ol_inds = x_ol_inds[:, :self.N1]          # (8,448)
+        # src_ol1 = gather_points(src_raw, x_ol_inds)   # (8,448,3)
         # src_ol2 = gather_points(src_ol1, similarity_max_inds)    # (8,268,3)
-        src_ol2 = gather_points(src_raw, similarity_max_inds)
+        # src_ol2 = gather_points(src_raw, similarity_max_inds)
 
         results['pred_Ts'] = pred_Ts
         results['pred_src'] = pred_src
         results['x_ol'] = x_ol
         results['y_ol'] = y_ol
-        results['src_ol1'] = src_ol1
-        results['src_ol2'] = src_ol2
+        # results['src_ol1'] = src_ol1
+        # results['src_ol2'] = src_ol2
 
         return results
 

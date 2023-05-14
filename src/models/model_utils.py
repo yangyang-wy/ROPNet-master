@@ -59,12 +59,14 @@ def ball_query(xyz, new_xyz, radius, K, rt_density=False):
     if rt_density:
         density = torch.sum(grouped_inds < N, dim=-1)
         density = density / N
+    if grouped_inds.shape[-1] < K:
+        K = grouped_inds.shape[-1]
     grouped_inds = torch.sort(grouped_inds, dim=-1)[0][:, :, :K]  # sort排序操作（做升序排序，后面的都是大的值（1024））
     grouped_min_inds = grouped_inds[:, :, 0:1].repeat(1, 1, K)  # 如果半径内的点没那么多，就直接用最小的距离的那个点（第一个点来代替）来复制补全
     grouped_inds[grouped_inds == N] = grouped_min_inds[grouped_inds == N]
     if rt_density:
-        return grouped_inds, density
-    return grouped_inds
+        return grouped_inds, density, K
+    return grouped_inds, K
 
 
 def sample_and_group(xyz, points, M, radius, K, use_xyz=True, rt_density=False): # 使用sample_and_group以达到选取中心点分局部区域的目的
@@ -83,10 +85,10 @@ def sample_and_group(xyz, points, M, radius, K, use_xyz=True, rt_density=False):
     else:
         new_xyz = gather_points(xyz, fps(xyz, M))
     if rt_density:
-        grouped_inds, density = ball_query(xyz, new_xyz, radius, K,
+        grouped_inds, density, K = ball_query(xyz, new_xyz, radius, K,
                                            rt_density=True)   # 遍历半径
     else:
-        grouped_inds = ball_query(xyz, new_xyz, radius, K, rt_density=False)   # new_xyz:采样的质心点，xyz:原始的点；返回的是索引
+        grouped_inds, K = ball_query(xyz, new_xyz, radius, K, rt_density=False)   # new_xyz:采样的质心点，xyz:原始的点；返回的是索引
     grouped_xyz = gather_points(xyz, grouped_inds) # 得到各个组中实际点
     grouped_xyz -= torch.unsqueeze(new_xyz, 2).repeat(1, 1, K, 1)  # 去mean new_xyz相当于簇的中心点 (去均值的操作)
     if points is not None:
@@ -99,7 +101,7 @@ def sample_and_group(xyz, points, M, radius, K, use_xyz=True, rt_density=False):
         new_points = grouped_xyz
     if rt_density:
         return new_xyz, new_points, grouped_inds, grouped_xyz, density
-    return new_xyz, new_points, grouped_inds, grouped_xyz
+    return new_xyz, new_points, grouped_inds, grouped_xyz, K
 
 
 def weighted_icp(src, tgt, weights, _EPS = 1e-8):

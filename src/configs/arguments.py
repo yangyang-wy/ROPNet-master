@@ -37,7 +37,7 @@ def config_params():
     parser.add_argument('--test_M1', type=int, default=180, help='')
     parser.add_argument('--test_similarity_topk', type=int, default=1,
                         help='')
-    parser.add_argument('--train_top_prob', type=float, default=0.6,
+    parser.add_argument('--train_top_prob', type=float, default=0.4,
                         help='')
     parser.add_argument('--test_top_prob', type=float, default=0.4,
                         help='')
@@ -78,7 +78,7 @@ def eval_config_params():
     parser = argparse.ArgumentParser(parents=[config_params()])
     parser.add_argument('--radius', type=float, default=0.3,
                         help='Neighborhood radius for computing pointnet features')       # 计算pointnet特征的邻域半径
-    parser.add_argument('--num_neighbors', type=int, default=64, metavar='N',
+    parser.add_argument('--num_neighbors', type=int, default=16, metavar='N',
                         help='Max num of neighbors to use')                               # 要使用的最大邻居数
     parser.add_argument('--feat_dim', type=int, default=192,
                         help='Feature dimension (to compute distances on)')               # 特征尺寸（用于计算距离）
