@@ -65,7 +65,7 @@ def train_config_params():                                                 # 训
                         help='initial learning rate')
     parser.add_argument('--radius', type=float, default=0.3,
                         help='Neighborhood radius for computing pointnet features')        # 计算pintnet特征的邻域半径：0.3
-    parser.add_argument('--num_neighbors', type=int, default=64, metavar='N',
+    parser.add_argument('--num_neighbors', type=int, default=16, metavar='N',
                         help='Max num of neighbors to use')
     parser.add_argument('--feat_dim', type=int, default=192,
                         help='Feature dimension (to compute distances on). '                       
