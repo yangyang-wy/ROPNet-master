@@ -13,12 +13,14 @@ sys.path.append(ROOR_DIR)
 
 from utils import batch_transform
 from models import CGModule, TFMRModule, gather_points, weighted_icp
+from models.model_utils import update_split_indices
 
 # ROPNet模型，
 class ROPNet(nn.Module):
     def __init__(self, args):
         super(ROPNet, self).__init__()
         # self.N1 = args.test_N1
+        self.args = args
         self.N1 = 448
         self.use_ppf = args.use_ppf
         self.cg= CGModule(in_dim=3, gn=False)
@@ -71,13 +73,28 @@ class ROPNet(nn.Module):
             z_median = float(torch.median(src_t_z).data)
             split_indices_list = []
             condition_1 = torch.logical_and((src_t_batch[:, :, 0] >= x_median), (src_t_batch[:, :, 1] > y_median))
-            split_indices_list.append(torch.nonzero(condition_1)[:, 1])
+            split_indices = torch.nonzero(condition_1)[:, 1]
+            if split_indices.shape[0] < self.args.train_N1:
+                split_indices = update_split_indices(split_indices, self.args.train_N1, condition_1)
+            split_indices_list.append(split_indices)
+
             condition_2 = torch.logical_and((src_t_batch[:, :, 0] < x_median), (src_t_batch[:, :, 1] >= y_median))
-            split_indices_list.append(torch.nonzero(condition_2)[:, 1])
+            split_indices = torch.nonzero(condition_2)[:, 1]
+            if split_indices.shape[0] < self.args.train_N1:
+                split_indices = update_split_indices(split_indices, self.args.train_N1, condition_2)
+            split_indices_list.append(split_indices)
+
             condition_3 = torch.logical_and((src_t_batch[:, :, 0] > x_median), (src_t_batch[:, :, 1] <= y_median))
-            split_indices_list.append(torch.nonzero(condition_3)[:, 1])
+            split_indices = torch.nonzero(condition_3)[:, 1]
+            if split_indices.shape[0] < self.args.train_N1:
+                split_indices = update_split_indices(split_indices, self.args.train_N1, condition_3)
+            split_indices_list.append(split_indices)
+
             condition_4 = torch.logical_and((src_t_batch[:, :, 0] <= x_median), (src_t_batch[:, :, 1] < y_median))
-            split_indices_list.append(torch.nonzero(condition_4)[:, 1])
+            split_indices = torch.nonzero(condition_4)[:, 1]
+            if split_indices.shape[0] < self.args.train_N1:
+                split_indices = update_split_indices(split_indices, self.args.train_N1, condition_4)
+            split_indices_list.append(split_indices)
             batch_indices_list.append(split_indices_list)
 
         R_batch_list = []
@@ -91,13 +108,13 @@ class ROPNet(nn.Module):
                 src_t_split = src_t[b:b+1, i, :].detach()
                 src_split, tgt_corr_split, icp_weights_split, similarity_max_inds_split = \
                     self.tfmr(src=src_t_split,
-                              tgt=tgt[b:b+1, i, :],
+                              tgt=tgt[b:b+1, :, :],
                               x_ol_score=x_ol_score[b:b+1, i],
-                              y_ol_score=y_ol_score[b:b+1, i],
+                              y_ol_score=y_ol_score[b:b+1, :],
                               train=train,
                               iter=0,
                               normal_src=normal_src_t[b:b+1, i, :],
-                              normal_tgt=normal_tgt[b:b+1, i, :])
+                              normal_tgt=normal_tgt[b:b+1, :, :])
                 R_cur_split, t_cur_split, _ = weighted_icp(src=src_split,
                                                tgt=tgt_corr_split,
                                                weights=icp_weights_split)

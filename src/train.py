@@ -203,7 +203,7 @@ def main():
                           normal=args.normal
                           )
     train_loader = DataLoader(train_set, batch_size=args.batchsize,
-                              shuffle=True, num_workers=args.num_workers)                  # shuffle=True，用于打乱数据集，每次都会以不同的顺序返回。
+                              shuffle=False, num_workers=args.num_workers)                  # shuffle=True，用于打乱数据集，每次都会以不同的顺序返回。
     test_loader = DataLoader(test_set, batch_size=args.batchsize, shuffle=False,
                              num_workers=args.num_workers)
 

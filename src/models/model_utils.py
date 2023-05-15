@@ -141,3 +141,12 @@ def weighted_icp(src, tgt, weights, _EPS = 1e-8):
     translation = torch.squeeze(translation, -1)
     transformed_src = batch_transform(src, rot_mat, translation)
     return rot_mat, translation, transformed_src
+
+
+def update_split_indices(split_indices, N1, condition):
+    pad_num =  N1 - split_indices.shape[0] + 5
+    non_split_indices = torch.nonzero(~condition)[:, 1]
+    pad_indices = torch.randint(0, non_split_indices.shape[0], (pad_num,))
+    pad_split_indices = torch.index_select(non_split_indices, 0, pad_indices)
+    new_split_indices = torch.cat((split_indices, pad_split_indices), dim=0)
+    return new_split_indices
